@@ -146,3 +146,37 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unknown data type' }, { status: 400 })
   }
 }
+
+// POST — update a setting in the tenant's database
+export async function POST(req: Request) {
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await req.json().catch(() => ({}))
+  const { key, value, category } = body as { key?: string; value?: string; category?: string }
+
+  if (!key) return NextResponse.json({ error: 'key is required' }, { status: 400 })
+
+  // Get AUSU's database URL
+  const tenant = await db.tenant.findFirst({ where: { status: 'active' }, select: { databaseUrl: true, id: true } })
+  const dbUrl = tenant?.databaseUrl || process.env.AUSU_DATABASE_URL || null
+  if (!dbUrl) return NextResponse.json({ error: 'No tenant database configured' }, { status: 500 })
+
+  const effectiveCategory = category || 'GENERAL'
+  const safeKey = key.replace(/[^a-zA-Z0-9_]/g, '_')
+  const safeValue = String(value || '')
+  const safeCategory = effectiveCategory.replace(/[^a-zA-Z0-9_]/g, '_')
+
+  try {
+    // Upsert: insert or update
+    await queryTenantDB(dbUrl,
+      `INSERT INTO "SystemSetting" (key, value, category, "updatedAt") VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (key) DO UPDATE SET value = $2, category = $3, "updatedAt" = NOW()`,
+      [safeKey, safeValue, safeCategory]
+    )
+    return NextResponse.json({ ok: true, key: safeKey })
+  } catch (err) {
+    console.error('[tenant-data] POST settings failed:', err)
+    return NextResponse.json({ error: 'Failed to update setting' }, { status: 500 })
+  }
+}
