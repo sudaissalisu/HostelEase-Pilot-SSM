@@ -13,27 +13,15 @@ export async function GET() {
       id: true, name: true, shortName: true, plan: true, status: true,
       licenseFee: true, startedAt: true, expiresAt: true,
       studentCount: true, bedCount: true, staffCount: true,
-      domain: true, portalUrl: true, databaseUrl: true,
-      city: true, state: true,
+      domain: true, portalUrl: true, databaseUrl: true, city: true, state: true,
     },
   })
 
-  // Fetch REAL stats from each tenant's database (in parallel)
   const tenantsWithStats = await Promise.all(
     tenants.map(async (t) => {
-      if (!t.databaseUrl) {
-        return { ...t, realStats: null }
-      }
-      const realStats = await fetchTenantStats(t.databaseUrl)
-      // Update the tenant record with the fresh counts (fire-and-forget)
+      const realStats = t.databaseUrl ? await fetchTenantStats(t.databaseUrl) : null
       if (realStats) {
-        db.tenant.update({
-          where: { id: t.id },
-          data: {
-            studentCount: realStats.studentCount,
-            bedCount: realStats.bedCount,
-          },
-        }).catch(() => {})
+        db.tenant.update({ where: { id: t.id }, data: { studentCount: realStats.studentCount, bedCount: realStats.bedCount } }).catch(() => {})
       }
       return { ...t, realStats }
     })
@@ -49,18 +37,13 @@ export async function GET() {
     return days <= 60 && days >= 0
   }).length
 
-  // Use real stats if available, fall back to stored counts
-  const totalStudents = tenantsWithStats.reduce((s, t) => s + (t.realStats?.studentCount ?? t.studentCount), 0)
-  const totalBeds = tenantsWithStats.reduce((s, t) => s + (t.realStats?.bedCount ?? t.bedCount), 0)
-  const totalTenantRevenue = tenantsWithStats.reduce((s, t) => s + (t.realStats?.totalRevenue ?? 0), 0)
-
   const stats = {
     totalTenants: tenants.length,
     activeTenants: tenants.filter(t => t.status === 'active').length,
-    totalStudents,
-    totalBeds,
+    totalStudents: tenantsWithStats.reduce((s, t) => s + (t.realStats?.studentCount ?? t.studentCount), 0),
+    totalBeds: tenantsWithStats.reduce((s, t) => s + (t.realStats?.bedCount ?? t.bedCount), 0),
     totalRevenue: paidInvoices.reduce((s, i) => s + i.amount, 0),
-    totalTenantRevenue, // revenue processed across all tenants
+    totalTenantRevenue: tenantsWithStats.reduce((s, t) => s + (t.realStats?.totalRevenue ?? 0), 0),
     pendingInvoices: invoices.filter(i => i.status === 'pending').length,
     overdueInvoices: invoices.filter(i => i.status === 'overdue').length,
     expiringLicenses,

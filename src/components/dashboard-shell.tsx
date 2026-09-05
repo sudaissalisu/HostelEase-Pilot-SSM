@@ -5,29 +5,61 @@ import { useRouter, usePathname } from 'next/navigation'
 import {
   ShieldCheck, LayoutDashboard, Building2, FileText, Receipt,
   TrendingUp, LifeBuoy, LogOut, Menu, X, Loader2, ChevronRight,
-  Mail, BarChart3, Scale,
+  Mail, BarChart3, Scale, CreditCard, Activity, AlertTriangle,
+  Lock, Bell, MessageSquare, Server, GitBranch, Palette, Settings,
+  Shield,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
-interface SessionUser {
-  id: string
-  email: string
-  name: string
-  role: string
-}
+interface SessionUser { id: string; email: string; name: string; role: string }
 
-const NAV = [
-  { href: '/overview', label: 'Overview', icon: LayoutDashboard },
-  { href: '/tenants', label: 'Tenants', icon: Building2 },
-  { href: '/licenses', label: 'Licenses', icon: FileText },
-  { href: '/invoices', label: 'Invoices', icon: Receipt },
-  { href: '/revenue', label: 'Revenue', icon: TrendingUp },
-  { href: '/email-logs', label: 'Email Logs', icon: Mail },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/support', label: 'Support', icon: LifeBuoy },
-  { href: '/legal', label: 'Legal', icon: Scale },
+const SECTIONS = [
+  {
+    title: 'Main',
+    items: [
+      { href: '/overview', label: 'Overview', icon: LayoutDashboard },
+      { href: '/tenants', label: 'Tenants', icon: Building2 },
+      { href: '/licenses', label: 'Licenses', icon: FileText },
+      { href: '/invoices', label: 'Invoices', icon: Receipt },
+      { href: '/revenue', label: 'Revenue', icon: TrendingUp },
+    ]
+  },
+  {
+    title: 'Observability',
+    items: [
+      { href: '/email-logs', label: 'Email Logs', icon: Mail },
+      { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+      { href: '/audit-logs', label: 'Audit Logs', icon: ShieldCheck },
+      { href: '/system-health', label: 'System Health', icon: Activity },
+      { href: '/alerts', label: 'Alerts & IP Block', icon: AlertTriangle },
+      { href: '/locked-students', label: 'Locked Students', icon: Lock },
+    ]
+  },
+  {
+    title: 'Communication',
+    items: [
+      { href: '/announcements', label: 'Announcements', icon: Bell },
+      { href: '/support-tickets', label: 'Support Tickets', icon: LifeBuoy },
+      { href: '/student-feedback', label: 'Student Feedback', icon: MessageSquare },
+      { href: '/notifications', label: 'Notifications', icon: Bell },
+    ]
+  },
+  {
+    title: 'System',
+    items: [
+      { href: '/payment-gateways', label: 'Payment Gateways', icon: CreditCard },
+      { href: '/reconciliation', label: 'Reconciliation', icon: BarChart3 },
+      { href: '/branding', label: 'Branding', icon: Palette },
+      { href: '/versioning', label: 'Versioning', icon: GitBranch },
+      { href: '/system-status', label: 'System Status', icon: Server },
+      { href: '/security', label: 'Security Center', icon: Shield },
+      { href: '/settings', label: 'Settings', icon: Settings },
+      { href: '/legal', label: 'Legal', icon: Scale },
+    ]
+  },
 ]
+
+const ALL_ITEMS = SECTIONS.flatMap(s => s.items)
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -63,7 +95,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     router.push('/login')
   }
 
-  const currentNav = NAV.find(n => pathname === n.href || pathname?.startsWith(n.href + '/'))
+  const currentNav = ALL_ITEMS.find(n => pathname === n.href || pathname?.startsWith(n.href + '/'))
 
   return (
     <div className="min-h-screen flex bg-slate-50">
@@ -87,25 +119,27 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {NAV.map(item => {
-            const active = pathname === item.href || pathname?.startsWith(item.href + '/')
-            return (
-              <button
-                key={item.href}
-                onClick={() => { router.push(item.href); setSidebarOpen(false) }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-                  active
-                    ? 'bg-primary/15 text-primary'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                }`}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {item.label}
-                {active && <ChevronRight className="h-3.5 w-3.5 ml-auto" />}
-              </button>
-            )
-          })}
+        <nav className="flex-1 p-3 overflow-y-auto">
+          {SECTIONS.map((section, si) => (
+            <div key={section.title} className={si > 0 ? 'mt-4' : ''}>
+              <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">{section.title}</div>
+              {section.items.map(item => {
+                const active = pathname === item.href || pathname?.startsWith(item.href + '/')
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => { router.push(item.href); setSidebarOpen(false) }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                      active ? 'bg-primary/15 text-primary' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="p-3 border-t border-slate-800">
@@ -150,11 +184,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <footer className="border-t border-slate-200 py-4 px-8 text-center text-xs text-slate-400">
           <div className="flex items-center justify-center gap-2 flex-wrap">
             <span className="font-medium text-slate-500">SSM Limited</span>
-            <span>·</span>
-            <span>RC 7977037</span>
-            <span>·</span>
-            <span>Kano, Nigeria</span>
-            <span>·</span>
+            <span>·</span><span>RC 7977037</span><span>·</span><span>Kano, Nigeria</span><span>·</span>
             <a href="mailto:support@ssm.com.ng" className="hover:text-primary transition">support@ssm.com.ng</a>
           </div>
           <div className="mt-1 text-[10px]">HostelEase is developed & owned by SSM Limited. Operated under license. © 2024–2026</div>
