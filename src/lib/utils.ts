@@ -148,3 +148,10 @@ export function paginate<T>(items: T[], page: number, pageSize: number) {
     totalPages: Math.max(1, Math.ceil(items.length / pageSize)),
   }
 }
+
+export function daysUntil(d: Date | string | null | undefined): number | null {
+  if (!d) return null
+  const date = typeof d === 'string' ? new Date(d) : d
+  const diff = date.getTime() - Date.now()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
