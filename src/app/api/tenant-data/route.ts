@@ -23,7 +23,7 @@ export async function GET(req: Request) {
   switch (type) {
     case 'overview': {
       const stats = await fetchTenantStats(dbUrl)
-      return NextResponse.json({ stats, tenantName: tenant.name })
+      return NextResponse.json({ stats, tenantName: tenant?.name || 'Unknown' })
     }
 
     case 'email-logs': {
