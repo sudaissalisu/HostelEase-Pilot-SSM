@@ -9,6 +9,7 @@
  */
 
 import nodemailer from 'nodemailer'
+import type { TransportOptions } from 'nodemailer'
 
 export interface SendEmailParams {
   to: string
@@ -47,7 +48,7 @@ async function sendViaSmtp(params: SendEmailParams): Promise<boolean> {
       secure: smtpPort === 465,
       auth: { user: smtpUser, pass: smtpPass },
       tls: { rejectUnauthorized: false },
-    } as nodemailer.TransportOptions)
+    } as TransportOptions)
 
     const info = await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
