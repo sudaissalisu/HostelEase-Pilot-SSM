@@ -12,6 +12,7 @@ export async function GET() {
       id: true, name: true, shortName: true, plan: true, status: true,
       licenseFee: true, startedAt: true, expiresAt: true,
       studentCount: true, bedCount: true, staffCount: true,
+      domain: true, portalUrl: true,
     },
   })
 
