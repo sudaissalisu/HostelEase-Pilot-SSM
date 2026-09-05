@@ -46,6 +46,11 @@
     },
   },
   "trustedDependencies": [
+    "sharp",
+    "@prisma/engines",
+    "argon2",
+    "prisma",
+    "@prisma/client",
     "unrs-resolver",
   ],
   "packages": {

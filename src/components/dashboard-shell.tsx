@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   ShieldCheck, LayoutDashboard, Building2, FileText, Receipt,
-  TrendingUp, LifeBuoy, LogOut, Menu, X, Loader2, ChevronRight
+  TrendingUp, LifeBuoy, LogOut, Menu, X, Loader2, ChevronRight,
+  Mail, BarChart3, Scale,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 interface SessionUser {
   id: string
@@ -20,7 +23,10 @@ const NAV = [
   { href: '/licenses', label: 'Licenses', icon: FileText },
   { href: '/invoices', label: 'Invoices', icon: Receipt },
   { href: '/revenue', label: 'Revenue', icon: TrendingUp },
+  { href: '/email-logs', label: 'Email Logs', icon: Mail },
+  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/support', label: 'Support', icon: LifeBuoy },
+  { href: '/legal', label: 'Legal', icon: Scale },
 ]
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -41,10 +47,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-emerald-600 grid place-items-center animate-pulse">
+          <div className="h-12 w-12 rounded-2xl bg-primary grid place-items-center animate-pulse">
             <ShieldCheck className="h-6 w-6 text-white" />
           </div>
-          <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
         </div>
       </div>
     )
@@ -61,7 +67,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-slate-50">
-      {/* Mobile toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
         className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-xl bg-white shadow-md border border-slate-200"
@@ -69,12 +74,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
-      {/* Sidebar */}
       <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-slate-900 flex flex-col z-40 transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        {/* Logo */}
         <div className="p-5 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-emerald-600 grid place-items-center shrink-0 shadow-lg shadow-emerald-600/30">
+            <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center shrink-0 shadow-lg shadow-primary/30">
               <ShieldCheck className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -84,7 +87,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
           {NAV.map(item => {
             const active = pathname === item.href || pathname?.startsWith(item.href + '/')
@@ -93,8 +95,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 onClick={() => { router.push(item.href); setSidebarOpen(false) }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-                  active 
-                    ? 'bg-emerald-600/15 text-emerald-400' 
+                  active
+                    ? 'bg-primary/15 text-primary'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                 }`}
               >
@@ -106,12 +108,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* User + logout */}
         <div className="p-3 border-t border-slate-800">
           <div className="flex items-center gap-2.5 mb-2 px-2">
-            <div className="h-8 w-8 rounded-full bg-emerald-600/20 text-emerald-400 grid place-items-center text-xs font-bold shrink-0">
-              {user.name.charAt(0).toUpperCase()}
-            </div>
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                {user.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0">
               <div className="text-xs font-medium text-white truncate">{user.name}</div>
               <div className="text-[10px] text-slate-500 truncate">{user.email}</div>
@@ -123,12 +126,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-      {/* Main content */}
       <main className="flex-1 min-w-0 flex flex-col">
-        {/* Top bar */}
         <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3 hidden lg:block">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
@@ -147,7 +147,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           {children}
         </div>
 
-        {/* Footer */}
         <footer className="border-t border-slate-200 py-4 px-8 text-center text-xs text-slate-400">
           <div className="flex items-center justify-center gap-2 flex-wrap">
             <span className="font-medium text-slate-500">SSM Limited</span>
@@ -156,7 +155,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <span>·</span>
             <span>Kano, Nigeria</span>
             <span>·</span>
-            <a href="mailto:support@ssm.com.ng" className="hover:text-emerald-600 transition">support@ssm.com.ng</a>
+            <a href="mailto:support@ssm.com.ng" className="hover:text-primary transition">support@ssm.com.ng</a>
           </div>
           <div className="mt-1 text-[10px]">HostelEase is developed & owned by SSM Limited. Operated under license. © 2024–2026</div>
         </footer>
