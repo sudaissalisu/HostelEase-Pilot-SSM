@@ -19,7 +19,9 @@ export async function GET() {
 
   const tenantsWithStats = await Promise.all(
     tenants.map(async (t) => {
-      const realStats = t.databaseUrl ? await fetchTenantStats(t.databaseUrl) : null
+      // Use the tenant's DB URL from the record, OR fall back to AUSU_DATABASE_URL env var
+      const dbUrl = t.databaseUrl || (t.id === 'ausu' ? process.env.AUSU_DATABASE_URL : null)
+      const realStats = dbUrl ? await fetchTenantStats(dbUrl) : null
       if (realStats) {
         db.tenant.update({ where: { id: t.id }, data: { studentCount: realStats.studentCount, bedCount: realStats.bedCount } }).catch(() => {})
       }

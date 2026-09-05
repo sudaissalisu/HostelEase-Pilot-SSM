@@ -13,12 +13,12 @@ export async function GET(req: Request) {
   const pageSize = Math.min(100, Math.max(10, parseInt(url.searchParams.get('pageSize') || '50', 10)))
   const status = url.searchParams.get('status')
 
-  // Get AUSU's database URL
+  // Get AUSU's database URL — from the tenant record OR the AUSU_DATABASE_URL env var
   const tenant = await db.tenant.findFirst({ where: { status: 'active' }, select: { databaseUrl: true, id: true, name: true } })
-  if (!tenant?.databaseUrl) {
-    return NextResponse.json({ error: 'No tenant database configured', data: null })
+  const dbUrl = tenant?.databaseUrl || process.env.AUSU_DATABASE_URL || null
+  if (!dbUrl) {
+    return NextResponse.json({ error: 'No tenant database configured. Set AUSU_DATABASE_URL env var.', data: null })
   }
-  const dbUrl = tenant.databaseUrl
 
   switch (type) {
     case 'overview': {
