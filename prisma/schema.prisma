@@ -1,0 +1,189 @@
+// SSM Pilot Dashboard — Prisma Schema
+// This is a SEPARATE database from the hostel portal. It stores SSM's
+// business data: SSM staff accounts, tenant (school) registry, licenses,
+// invoices, and contracts.
+//
+// The hostel portal (hostelease) has its own database per school.
+// This pilot dashboard manages the business side: who's licensed,
+// how much they owe, when their license expires, etc.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// SSM STAFF — employees of SSM Limited who manage the pilot dashboard
+// ---------------------------------------------------------------------------
+
+model SsmUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("SSM_ADMIN") // SSM_ADMIN | SSM_SUPER_ADMIN
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  invoices     Invoice[]
+  contracts    Contract[]
+  announcements Announcement[]
+
+  @@index([email])
+}
+
+// ---------------------------------------------------------------------------
+// TENANT — a school/university using HostelEase under license
+// ---------------------------------------------------------------------------
+
+model Tenant {
+  id            String   @id // e.g. "ausu" — used in subdomain ausu.hostelease.com
+  name          String   // "Al-Istiqama University, Sumaila"
+  shortName     String   // "AUSU"
+  domain        String   // "ausu.hostelease.com"
+  portalUrl     String   // "https://ausu.hostelease.com"
+  databaseUrl   String?  // connection string to the tenant's hostel DB (for support access)
+  plan          String   @default("standard") // starter | standard | premium | enterprise
+  status        String   @default("active") // active | suspended | expired | trial
+  licenseFee    Float    @default(0) // annual licensing fee in NGN
+  currency      String   @default("NGN")
+  startedAt     DateTime @default(now())
+  expiresAt     DateTime? // license expiry date
+  autoRenew     Boolean  @default(true)
+
+  // Contact person at the school (usually the IT director or registrar)
+  contactName   String?
+  contactEmail  String?
+  contactPhone  String?
+
+  // Address
+  addressLine   String?
+  city          String?
+  state         String?
+  country       String  @default("Nigeria")
+
+  // Stats (updated periodically by the pilot dashboard)
+  studentCount  Int     @default(0)
+  bedCount      Int     @default(0)
+  staffCount    Int     @default(0)
+
+  // Metadata
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  invoices      Invoice[]
+  contracts     Contract[]
+  announcements Announcement[]
+  supportLogs   SupportLog[]
+
+  @@index([status])
+  @@index([plan])
+}
+
+// ---------------------------------------------------------------------------
+// INVOICE — licensing fee invoices sent to tenants
+// ---------------------------------------------------------------------------
+
+model Invoice {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  invoiceNo   String   @unique // "INV-2026-001"
+  amount      Float
+  currency    String   @default("NGN")
+  status      String   @default("pending") // pending | paid | overdue | cancelled
+  period      String   // "2026 Annual License" | "2026 Q1 Setup"
+  issuedAt    DateTime @default(now())
+  dueAt       DateTime?
+  paidAt      DateTime?
+  method      String?  // bank_transfer | paystack | flutterwave | cash
+  reference   String?  // payment reference / transaction ID
+  notes       String?
+  createdById String?
+  createdBy   SsmUser? @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([status, dueAt])
+}
+
+// ---------------------------------------------------------------------------
+// CONTRACT — license agreement between SSM Limited and the tenant
+// ---------------------------------------------------------------------------
+
+model Contract {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  title       String   // "Annual License Agreement — AUSU 2026"
+  type        String   @default("annual") // annual | multi_year | pilot | trial
+  status      String   @default("active") // draft | active | expired | terminated
+  startDate   DateTime
+  endDate     DateTime?
+  feeAmount   Float
+  feeCurrency String   @default("NGN")
+  feeSchedule String   @default("annual") // annual | quarterly | monthly
+  terms       String?  // contract terms / notes
+  signedBy    String?  // name of signatory at the school
+  signedAt    DateTime?
+  documentUrl String?  // URL to the signed contract PDF
+  createdById String?
+  createdBy   SsmUser? @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, status])
+}
+
+// ---------------------------------------------------------------------------
+// ANNOUNCEMENT — system-wide announcements pushed to tenants
+// ---------------------------------------------------------------------------
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  message     String
+  type        String   @default("info") // info | warning | maintenance | update
+  target      String   @default("all") // all | specific tenant
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  createdById String?
+  createdBy   SsmUser? @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished, target])
+}
+
+// ---------------------------------------------------------------------------
+// SUPPORT LOG — track support interactions with tenants
+// ---------------------------------------------------------------------------
+
+model SupportLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  subject     String
+  description String
+  type        String   @default("support") // support | incident | maintenance | onboarding
+  status      String   @default("open") // open | in_progress | resolved | closed
+  priority    String   @default("medium") // low | medium | high | urgent
+  resolvedAt  DateTime?
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([status, priority])
+}
