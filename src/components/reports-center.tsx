@@ -588,7 +588,7 @@ function AdvancedAnalyticsTab() {
                 <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="stage" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} width={90} />
                 <RechartsTooltip
-                  formatter={(v: number | string) => [`${v} students`, 'Count']}
+                  formatter={(v: any) => [`${v} students`, 'Count']}
                   contentStyle={{ borderRadius: 8, border: '1px solid hsl(var(--border))', fontSize: 12 }}
                 />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]} minPointSize={4}>
@@ -660,7 +660,7 @@ function AdvancedAnalyticsTab() {
                 <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
                 <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
                 <RechartsTooltip
-                  formatter={(v: number | string) => [`${v} allocations`, 'Count']}
+                  formatter={(v: any) => [`${v} allocations`, 'Count']}
                   contentStyle={{ borderRadius: 8, border: '1px solid hsl(var(--border))', fontSize: 12 }}
                 />
                 <Bar dataKey="count" fill="#16a34a" radius={[4, 4, 0, 0]} minPointSize={2} />
