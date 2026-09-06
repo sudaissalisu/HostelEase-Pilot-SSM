@@ -14,27 +14,33 @@ export async function GET(req: Request) {
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10))
     const pageSize = Math.min(100, Math.max(10, parseInt(url.searchParams.get('pageSize') || '50', 10)))
 
-    const where: any = {}
-    if (status) where.status = status
+    let whereClause = ''
+    const params: any[] = []
+    let paramIdx = 1
+
+    if (status) {
+      whereClause += `WHERE status = $${paramIdx}`
+      params.push(status)
+      paramIdx++
+    }
     if (search) {
-      where.OR = [
-        { toEmail: { contains: search } },
-        { subject: { contains: search } },
-      ]
+      whereClause += whereClause ? ' AND' : 'WHERE'
+      whereClause += ` ("toEmail" ILIKE $${paramIdx} OR subject ILIKE $${paramIdx})`
+      params.push(`%${search}%`)
+      paramIdx++
     }
 
-    const [total, logs] = await Promise.all([
-      tdb.emailLog.count({ where }),
-      tdb.emailLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-    ])
+    const countResult = await tdb.$queryRawUnsafe(`SELECT COUNT(*)::int as count FROM "EmailLog" ${whereClause}`, ...params)
+    const total = (countResult as any[])[0]?.count || 0
+
+    const logs = await tdb.$queryRawUnsafe(
+      `SELECT id, "toEmail", subject, status, error, "createdAt", "sentAt", "retryCount", "lastRetriedAt" FROM "EmailLog" ${whereClause} ORDER BY "createdAt" DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+      ...params, pageSize, (page - 1) * pageSize
+    )
 
     return NextResponse.json({ logs, total, pagination: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) } })
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to fetch email logs' }, { status: 500 })
+    console.error('[email-logs] GET failed:', err)
+    return NextResponse.json({ logs: [], total: 0 })
   }
 }

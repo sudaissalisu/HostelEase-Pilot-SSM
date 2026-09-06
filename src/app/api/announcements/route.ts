@@ -8,12 +8,15 @@ export async function GET() {
 
   try {
     const tdb = await getTenantDb()
-    const announcements = await tdb.announcement.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    })
+    const announcements = await tdb.$queryRaw`
+      SELECT id, title, message, type, "isActive", pinned, "createdAt", "updatedAt"
+      FROM "Announcement"
+      ORDER BY "createdAt" DESC
+      LIMIT 50
+    `
     return NextResponse.json({ announcements })
   } catch (err) {
+    console.error('[announcements] GET failed:', err)
     return NextResponse.json({ announcements: [] })
   }
 }
@@ -25,17 +28,14 @@ export async function POST(req: Request) {
   try {
     const tdb = await getTenantDb()
     const body = await req.json()
-    const announcement = await tdb.announcement.create({
-      data: {
-        title: body.title,
-        message: body.message,
-        type: body.type || 'info',
-        isActive: body.isActive ?? true,
-        pinned: body.pinned ?? false,
-      },
-    })
-    return NextResponse.json({ announcement })
+    const result = await tdb.$queryRaw`
+      INSERT INTO "Announcement" (id, title, message, type, "isActive", pinned, "createdAt", "updatedAt")
+      VALUES (gen_random_uuid(), ${body.title}, ${body.message}, ${body.type || 'info'}, ${body.isActive ?? true}, ${body.pinned ?? false}, NOW(), NOW())
+      RETURNING id, title, message, type, "isActive", pinned, "createdAt"
+    `
+    return NextResponse.json({ announcement: (result as any[])[0] })
   } catch (err) {
+    console.error('[announcements] POST failed:', err)
     return NextResponse.json({ error: 'Failed to create announcement' }, { status: 500 })
   }
 }

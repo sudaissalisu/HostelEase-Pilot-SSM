@@ -8,13 +8,14 @@ export async function GET() {
 
   try {
     const tdb = await getTenantDb()
-    const versionSetting = await tdb.systemSetting.findUnique({ where: { key: 'app_version' } })
-    const changelogSetting = await tdb.systemSetting.findUnique({ where: { key: 'app_changelog' } })
+    const versionSetting = await tdb.$queryRaw`SELECT value FROM "SystemSetting" WHERE key = 'app_version'`
+    const changelogSetting = await tdb.$queryRaw`SELECT value FROM "SystemSetting" WHERE key = 'app_changelog'`
 
-    let version = versionSetting?.value || '1.0.0'
+    let version = (versionSetting as any[])[0]?.value || '1.0.0'
     let changelog: any[] = []
-    if (changelogSetting?.value) {
-      try { changelog = JSON.parse(changelogSetting.value) } catch {}
+    const rawChangelog = (changelogSetting as any[])[0]?.value
+    if (rawChangelog) {
+      try { changelog = JSON.parse(rawChangelog) } catch {}
     }
 
     return NextResponse.json({ version, current: changelog[changelog.length - 1] || null, changelog })

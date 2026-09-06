@@ -8,13 +8,14 @@ export async function GET() {
 
   try {
     const tdb = await getTenantDb()
-    const versionSetting = await tdb.systemSetting.findUnique({ where: { key: 'app_version' } })
-    const changelogSetting = await tdb.systemSetting.findUnique({ where: { key: 'app_changelog' } })
+    const versionSetting = await tdb.$queryRaw`SELECT value FROM "SystemSetting" WHERE key = 'app_version'`
+    const changelogSetting = await tdb.$queryRaw`SELECT value FROM "SystemSetting" WHERE key = 'app_changelog'`
 
-    let version = versionSetting?.value || '1.0.0'
+    let version = (versionSetting as any[])[0]?.value || '1.0.0'
     let changelog: any[] = []
-    if (changelogSetting?.value) {
-      try { changelog = JSON.parse(changelogSetting.value) } catch {}
+    const rawChangelog = (changelogSetting as any[])[0]?.value
+    if (rawChangelog) {
+      try { changelog = JSON.parse(rawChangelog) } catch {}
     }
 
     return NextResponse.json({ version, changelog })
@@ -33,22 +34,23 @@ export async function PUT(req: Request) {
     const { version, changelog } = body
 
     if (version) {
-      await tdb.systemSetting.upsert({
-        where: { key: 'app_version' },
-        create: { key: 'app_version', value: version, category: 'VERSIONING' },
-        update: { value: version },
-      })
+      await tdb.$queryRaw`
+        INSERT INTO "SystemSetting" (key, value, category, "updatedAt")
+        VALUES ('app_version', ${version}, 'VERSIONING', NOW())
+        ON CONFLICT (key) DO UPDATE SET value = ${version}, "updatedAt" = NOW()
+      `
     }
     if (changelog) {
-      await tdb.systemSetting.upsert({
-        where: { key: 'app_changelog' },
-        create: { key: 'app_changelog', value: JSON.stringify(changelog), category: 'VERSIONING' },
-        update: { value: JSON.stringify(changelog) },
-      })
+      const changelogStr = JSON.stringify(changelog)
+      await tdb.$queryRaw`
+        INSERT INTO "SystemSetting" (key, value, category, "updatedAt")
+        VALUES ('app_changelog', ${changelogStr}, 'VERSIONING', NOW())
+        ON CONFLICT (key) DO UPDATE SET value = ${changelogStr}, "updatedAt" = NOW()
+      `
     }
 
     return NextResponse.json({ ok: true })
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to update version' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed' }, { status: 500 })
   }
 }

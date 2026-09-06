@@ -12,14 +12,13 @@ export async function GET(req: Request) {
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10))
     const pageSize = Math.min(100, Math.max(10, parseInt(url.searchParams.get('pageSize') || '50', 10)))
 
-    const [total, notifications] = await Promise.all([
-      tdb.notification.count(),
-      tdb.notification.findMany({
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-    ])
+    const countResult = await tdb.$queryRaw`SELECT COUNT(*)::int as count FROM "Notification"`
+    const total = (countResult as any[])[0]?.count || 0
+
+    const notifications = await tdb.$queryRaw`
+      SELECT id, title, message, type, category, "isRead", "createdAt", "userId"
+      FROM "Notification" ORDER BY "createdAt" DESC LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
+    `
 
     return NextResponse.json({ notifications, total, pagination: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) } })
   } catch (err) {

@@ -8,12 +8,15 @@ export async function GET() {
 
   try {
     const tdb = await getTenantDb()
-    const gateways = await tdb.paymentGateway.findMany({
-      orderBy: { provider: 'asc' },
-    })
+    const gateways = await tdb.$queryRaw`
+      SELECT id, provider, "displayName", "publicKey", "secretKey", "webhookSecret", "merchantId", "apiKey",
+             "logoUrl", "isEnabled", "isSandbox", config, "updatedAt"
+      FROM "PaymentGateway" ORDER BY provider
+    `
     return NextResponse.json({ gateways })
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to fetch payment gateways' }, { status: 500 })
+    console.error('[payment-gateways] GET failed:', err)
+    return NextResponse.json({ gateways: [] })
   }
 }
 
@@ -25,17 +28,21 @@ export async function PUT(req: Request) {
     const tdb = await getTenantDb()
     const body = await req.json()
     const { id, isEnabled, isSandbox, displayName } = body
-
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
 
-    const data: any = {}
-    if (isEnabled !== undefined) data.isEnabled = Boolean(isEnabled)
-    if (isSandbox !== undefined) data.isSandbox = Boolean(isSandbox)
-    if (displayName !== undefined) data.displayName = String(displayName)
+    if (isEnabled !== undefined) {
+      await tdb.$queryRaw`UPDATE "PaymentGateway" SET "isEnabled" = ${Boolean(isEnabled)}, "updatedAt" = NOW() WHERE id = ${id}`
+    }
+    if (isSandbox !== undefined) {
+      await tdb.$queryRaw`UPDATE "PaymentGateway" SET "isSandbox" = ${Boolean(isSandbox)}, "updatedAt" = NOW() WHERE id = ${id}`
+    }
+    if (displayName !== undefined) {
+      await tdb.$queryRaw`UPDATE "PaymentGateway" SET "displayName" = ${String(displayName)}, "updatedAt" = NOW() WHERE id = ${id}`
+    }
 
-    await tdb.paymentGateway.update({ where: { id }, data })
     return NextResponse.json({ ok: true })
   } catch (err) {
+    console.error('[payment-gateways] PUT failed:', err)
     return NextResponse.json({ error: 'Failed to update payment gateway' }, { status: 500 })
   }
 }
