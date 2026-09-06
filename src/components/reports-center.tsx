@@ -500,7 +500,7 @@ function AdvancedAnalyticsTab() {
               <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} interval="preserveStartEnd" />
               <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} tickFormatter={(v) => `₦${(Number(v) / 1000).toFixed(0)}k`} />
               <RechartsTooltip
-                formatter={(v: number | string) => fmtMoney(Number(v))}
+                formatter={(v: any) => fmtMoney(Number(v))}
                 contentStyle={{ borderRadius: 8, border: '1px solid hsl(var(--border))', fontSize: 12 }}
               />
               <Area type="monotone" dataKey="total" stroke="#16a34a" strokeWidth={2} fill="url(#fillAdvRevenue)" name="Revenue" />
