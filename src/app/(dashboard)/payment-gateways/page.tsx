@@ -1,31 +1,64 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader, EmptyState, StatCard } from '@/components/page-header'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { CreditCard, Loader2, RefreshCw } from 'lucide-react'
+import { CreditCard, Loader2, RefreshCw, CheckCircle2, XCircle } from 'lucide-react'
 
-export default function Page() {
-  const [data, setData] = useState<any>(null)
+export default function PaymentGatewaysPage() {
+  const [gateways, setGateways] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
   function load() {
     setLoading(true)
-    fetch('/api/tenant-data?type=payment-gateways').then(r => r.json()).then(d => setData(d)).finally(() => setLoading(false))
+    fetch('/api/tenant-data?type=payment-gateways').then(r => r.json()).then(d => setGateways(d.gateways || [])).finally(() => setLoading(false))
   }
   useEffect(() => { load() }, [])
-  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+
+  const enabled = gateways.filter(g => g.isEnabled).length
+  const sandbox = gateways.filter(g => g.isSandbox).length
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold">Payment Gateways</h1><p className="text-sm text-slate-500 mt-1">Payment gateway configuration at AUSU.</p></div>
-        <Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1.5" /> Refresh</Button>
+    <div>
+      <PageHeader title="Payment Gateways" description="Payment gateway configuration at AUSU."
+        actions={<Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1.5" /> Refresh</Button>} />
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-6">
+        <StatCard label="Total Gateways" value={gateways.length} icon={CreditCard} accent="primary" />
+        <StatCard label="Enabled" value={enabled} icon={CheckCircle2} accent="primary" />
+        <StatCard label="Sandbox Mode" value={sandbox} icon={XCircle} accent="amber" />
       </div>
-      <Card><CardContent className="p-6">
-        {data && Object.keys(data).length > 0 ? (
-          <pre className="text-xs text-slate-600 whitespace-pre-wrap overflow-auto max-h-[60vh]">{JSON.stringify(data, null, 2)}</pre>
-        ) : (
-          <div className="text-center text-sm text-slate-500 py-8"><CreditCard className="h-10 w-10 mx-auto mb-2 text-slate-300" />No data available.</div>
-        )}
-      </CardContent></Card>
+      {loading ? <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+      : gateways.length === 0 ? <Card><CardContent className="p-0"><EmptyState icon={CreditCard} title="No gateways" description="No payment gateways configured at AUSU." /></CardContent></Card>
+      : (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {gateways.map((g: any) => (
+            <Card key={g.provider}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary grid place-items-center">
+                      <CreditCard className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">{g.displayName || g.provider}</div>
+                      <div className="text-xs text-muted-foreground">{g.provider}</div>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className={g.isEnabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-muted text-muted-foreground'}>
+                    {g.isEnabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <Badge variant="secondary" className={g.isSandbox ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}>
+                    {g.isSandbox ? 'Sandbox' : 'Live'}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

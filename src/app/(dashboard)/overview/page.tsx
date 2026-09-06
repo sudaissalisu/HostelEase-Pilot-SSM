@@ -60,7 +60,12 @@ export default function OverviewPage() {
         <StatCard label="Active Tenants" value={stats?.activeTenants ?? 0} icon={Building2} hint={`of ${stats?.totalTenants ?? 0} total`} accent="primary" />
         <StatCard label="Total Students" value={(stats?.totalStudents ?? 0).toLocaleString()} icon={Users} hint="Across all tenants" accent="blue" />
         <StatCard label="Managed Beds" value={(stats?.totalBeds ?? 0).toLocaleString()} icon={BedDouble} hint="Total bed capacity" accent="purple" />
-        <StatCard label="SSM Revenue" value={fmtMoney(stats?.totalRevenue ?? 0)} icon={TrendingUp} hint="Licensing fees collected" accent="amber" />
+        <StatCard label="Tenant Revenue" value={fmtMoney(stats?.totalTenantRevenue ?? 0)} icon={TrendingUp} hint="Revenue processed by tenants" accent="amber" />
+      </div>
+
+      {/* SSM Revenue row */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <StatCard label="SSM Revenue" value={fmtMoney(stats?.totalRevenue ?? 0)} icon={Receipt} hint="Licensing fees collected" accent="primary" />
       </div>
 
       {/* Alerts */}
