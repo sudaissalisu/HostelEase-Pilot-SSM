@@ -119,8 +119,8 @@ export function AppSidebar({ user, ...props }: { user: SessionUser | null } & Re
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
-        <NavSecondary items={SECONDARY_NAV} className="mt-auto" />
+        <NavMain items={navItems as any} />
+        <NavSecondary items={SECONDARY_NAV as any} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         {userData && <NavUser user={userData} onLogout={handleLogout} />}
