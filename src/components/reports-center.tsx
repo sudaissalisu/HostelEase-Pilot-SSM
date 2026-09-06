@@ -547,7 +547,7 @@ function AdvancedAnalyticsTab() {
                     formatter={(value) => <span className="text-xs">{value}</span>}
                   />
                   <RechartsTooltip
-                    formatter={(v: number | string, n: string) => [`${v} payments`, n]}
+                    formatter={(v: any, n: any) => [`${v} payments`, n]}
                     contentStyle={{ borderRadius: 8, border: '1px solid hsl(var(--border))', fontSize: 12 }}
                   />
                 </PieChart>
