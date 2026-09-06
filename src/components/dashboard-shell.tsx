@@ -94,10 +94,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </button>
 
       <aside className={cn(
-        'fixed lg:sticky top-0 left-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-40 transition-transform shrink-0',
+        'fixed lg:sticky top-0 left-0 h-screen w-64 bg-sidebar flex flex-col z-40 transition-transform shrink-0 border-r border-slate-200 dark:border-slate-800',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}>
-        <div className="p-4 border-b border-sidebar-border">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center shrink-0 shadow-lg shadow-primary/20">
               <ShieldCheck className="h-5 w-5 text-primary-foreground" />
@@ -135,7 +135,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-sidebar-border">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="flex items-center gap-2.5 min-w-0">
               <Avatar className="h-8 w-8">

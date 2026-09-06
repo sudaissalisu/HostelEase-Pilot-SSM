@@ -46,7 +46,7 @@ export default function SsmBrandingPage() {
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/tenant-data', { method: 'POST', body: fd })
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
       if (!res.ok) throw new Error('Upload failed')
       const data = await res.json()
       if (data.url) {
