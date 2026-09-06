@@ -113,12 +113,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
-      {/* Sidebar — matches hostel platform: light sidebar with bg-sidebar */}
+      {/* Sidebar */}
       <aside className={cn(
-        'fixed lg:sticky top-0 left-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-40 transition-transform',
+        'fixed lg:sticky top-0 left-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-40 transition-transform shrink-0',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}>
-        {/* Logo */}
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center shrink-0 shadow-lg shadow-primary/20">
@@ -131,7 +130,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 p-2 overflow-y-auto">
           {SECTIONS.map((section, si) => (
             <div key={section.title} className={si > 0 ? 'mt-3' : ''}>
@@ -158,7 +156,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        {/* User + theme + logout */}
         <div className="p-3 border-t border-sidebar-border">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -187,13 +184,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-      {/* Main content */}
-      <main className="flex-1 min-w-0 flex flex-col">
+      {/* Main content — full height flex so footer sticks to bottom */}
+      <main className="flex-1 min-w-0 flex flex-col min-h-screen">
         {/* Top bar */}
-        <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-6 py-3 hidden lg:flex items-center justify-between">
+        <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 lg:px-6 py-3 hidden lg:flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">SSM Pilot</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
@@ -203,20 +199,21 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             All systems operational
           </div>
-        </div>
+        </header>
 
+        {/* Scrollable content area */}
         <div className="flex-1 p-4 lg:p-6 max-w-[1400px] mx-auto w-full">
           {children}
         </div>
 
-        {/* Footer */}
-        <footer className="border-t border-border mt-auto py-4 px-6 text-center text-xs text-muted-foreground">
+        {/* Footer — sticks to bottom */}
+        <footer className="border-t border-border py-3 px-4 lg:px-6 text-center text-xs text-muted-foreground shrink-0">
           <div className="flex items-center justify-center gap-2 flex-wrap">
             <span className="font-medium text-foreground">SSM Limited</span>
             <span>·</span><span>RC 7977037</span><span>·</span><span>Kano, Nigeria</span><span>·</span>
             <a href="mailto:support@ssm.com.ng" className="hover:text-primary transition">support@ssm.com.ng</a>
           </div>
-          <div className="mt-1 text-[10px]">HostelEase is developed & owned by SSM Limited. Operated under license. © 2024–2026</div>
+          <div className="mt-0.5 text-[10px]">HostelEase is developed & owned by SSM Limited. Operated under license. © 2024–2026</div>
         </footer>
       </main>
     </div>
