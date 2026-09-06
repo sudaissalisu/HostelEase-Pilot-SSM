@@ -495,7 +495,7 @@ const TAB_META: Array<{
     | 'canManageAllocationSettings'
     | 'canManageAiSettings'
 }> = [
-  { key: 'GENERAL', label: 'General', icon: Building, description: 'Institution identity & contact details', requiredFlag: 'canManageGeneralSettings' },
+  
   // PAYMENT tab removed — fee/pricing configuration now lives in
   // src/components/bursary/bursary-payment-settings.tsx (Bursary Office).
   { key: 'SECURITY', label: 'Security', icon: ShieldCheck, description: 'Login attempt & lockout policies', requiredFlag: 'canManageSecuritySettings' },
@@ -777,7 +777,7 @@ export function SettingsManager() {
 
   // The default tab is the first visible one — so a role that can only see
   // EMAIL lands on EMAIL, not on a hidden/empty GENERAL tab.
-  const defaultTab = visibleTabs[0]?.key ?? 'GENERAL'
+  const defaultTab = visibleTabs[0]?.key ?? 'SECURITY'
 
   return (
     <div className="space-y-6">
