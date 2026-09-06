@@ -180,3 +180,63 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to update setting' }, { status: 500 })
   }
 }
+
+// PUT — update payment gateway in tenant's database
+export async function PUT(req: Request) {
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await req.json().catch(() => ({}))
+  const { action, provider, ...gatewayData } = body as { action?: string; provider?: string; [k: string]: any }
+
+  const tenant = await db.tenant.findFirst({ where: { status: 'active' }, select: { databaseUrl: true, id: true } })
+  const dbUrl = tenant?.databaseUrl || process.env.AUSU_DATABASE_URL || null
+  if (!dbUrl) return NextResponse.json({ error: 'No tenant database configured' }, { status: 500 })
+
+  if (action === 'toggle-gateway') {
+    // Toggle a payment gateway on/off
+    await queryTenantDB(dbUrl,
+      `UPDATE "PaymentGateway" SET "isEnabled" = $1 WHERE provider = $2`,
+      [gatewayData.isEnabled, provider]
+    )
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'update-gateway') {
+    // Update gateway settings
+    const fields: string[] = []
+    const params: any[] = []
+    let idx = 1
+    for (const [k, v] of Object.entries(gatewayData)) {
+      if (k === 'action' || k === 'provider') continue
+      fields.push(`"${k}" = $${idx}`)
+      params.push(v)
+      idx++
+    }
+    params.push(provider)
+    if (fields.length > 0) {
+      await queryTenantDB(dbUrl, `UPDATE "PaymentGateway" SET ${fields.join(', ')} WHERE provider = $${idx}`, params)
+    }
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'toggle-maintenance') {
+    // Toggle maintenance mode
+    await queryTenantDB(dbUrl,
+      `INSERT INTO "SystemSetting" (key, value, category, "updatedAt") VALUES ('kill_switch', $1, 'MAINTENANCE', NOW()) ON CONFLICT (key) DO UPDATE SET value = $1, "updatedAt" = NOW()`,
+      [String(gatewayData.enabled)]
+    )
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'toggle-ai') {
+    // Toggle AI assistant
+    await queryTenantDB(dbUrl,
+      `INSERT INTO "SystemSetting" (key, value, category, "updatedAt") VALUES ('ai_agent_enabled', $1, 'AI', NOW()) ON CONFLICT (key) DO UPDATE SET value = $1, "updatedAt" = NOW()`,
+      [String(gatewayData.enabled)]
+    )
+    return NextResponse.json({ ok: true })
+  }
+
+  return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
+}
