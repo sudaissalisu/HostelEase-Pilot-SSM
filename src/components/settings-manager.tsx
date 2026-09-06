@@ -134,7 +134,7 @@ interface SettingsResponse {
 interface FieldDef {
   key: string
   label: string
-  type: 'text' | 'number' | 'email' | 'tel' | 'select'
+  type: 'text' | 'number' | 'email' | 'tel' | 'select' | 'textarea'
   placeholder?: string
   hint?: string
   options?: Array<{ label: string; value: string }>
