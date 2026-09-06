@@ -103,7 +103,7 @@ import {
   initials,
   truncate,
 } from '@/lib/utils'
-import { useRouterStore, useAuthStore } from '@/lib/store'
+import { useAuthStore } from '@/lib/store'
 import { useRolePermissions } from '@/lib/use-role-permissions'
 import type { Severity } from '@/lib/audit'
 
@@ -423,7 +423,7 @@ function diffState(
 // ---------------------------------------------------------------------------
 
 export function AuditLogsViewer({ initialFilters, hideHeader }: AuditLogsViewerProps) {
-  const { setView } = useRouterStore()
+  
   const { canManage } = useRolePermissions()
   const canManageSettings = canManage('canManageSettings')
   const isSuperAdmin = useAuthStore((s) => s.user?.role === 'SUPER_ADMIN')
@@ -663,7 +663,7 @@ export function AuditLogsViewer({ initialFilters, hideHeader }: AuditLogsViewerP
         })
       )
       toast.success('Opening support ticket with audit context…')
-      setView('admin:support')
+      window.location.href = '/support'
     } catch {
       toast.error('Could not stash audit context')
     }

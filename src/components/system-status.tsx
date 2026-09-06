@@ -43,7 +43,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, fmtMoney, fmtRelative, fmtDateTime } from '@/lib/utils'
-import { useRouterStore, type ViewKey } from '@/lib/store'
+
 import { useRolePermissions } from '@/lib/use-role-permissions'
 import { getCurrentVersion, getCurrentVersionEntry } from '@/lib/versioning'
 
@@ -223,7 +223,7 @@ const fetcher = async (url: string) => {
 // Main component
 // ---------------------------------------------------------------------------
 export function SystemStatus() {
-  const { setView } = useRouterStore()
+  
   const { data, isLoading, error, mutate } = useSWR<SystemStatusData>(
     '/api/system-status',
     fetcher,
@@ -243,7 +243,7 @@ export function SystemStatus() {
             <Button variant="outline" size="sm" onClick={() => mutate()}>
               <RefreshCw className="h-4 w-4 mr-2" /> Refresh
             </Button>
-            <Button size="sm" onClick={() => setView('admin:overview')}>
+            <Button size="sm" onClick={() => window.location.href = '/overview'}>
               <Activity className="h-4 w-4 mr-2" /> Back to dashboard
             </Button>
           </>
@@ -270,7 +270,7 @@ export function SystemStatus() {
 
       {data && (
         <div className="space-y-6">
-          <SectionAHealth health={data.health} onNavigate={(v) => setView(v as ViewKey)} />
+          <SectionAHealth health={data.health} onNavigate={(v) => { if (v) window.location.href = '/' + String(v).replace('admin:', '') }} />
           <SectionBDbStats stats={data.dbStats} />
           <SectionCPipelines pipelines={data.pipelines} />
           <SectionDServices services={data.services} />
@@ -1130,7 +1130,7 @@ function SectionERecentActivity({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setView('admin:versions')}
+            onClick={() => window.location.href = '/versioning'}
           >
             <History className="h-3.5 w-3.5 mr-1.5" /> Open Versioning
             <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
