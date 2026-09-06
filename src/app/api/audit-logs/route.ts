@@ -9,24 +9,18 @@ export async function GET(req: Request) {
   try {
     const tdb = await getTenantDb()
     const url = new URL(req.url)
-    const status = url.searchParams.get('status')
-    const search = url.searchParams.get('q')
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10))
     const pageSize = Math.min(100, Math.max(10, parseInt(url.searchParams.get('pageSize') || '50', 10)))
+    const severity = url.searchParams.get('severity')
 
     const where: any = {}
-    if (status) where.status = status
-    if (search) {
-      where.OR = [
-        { toEmail: { contains: search } },
-        { subject: { contains: search } },
-      ]
-    }
+    if (severity) where.severity = severity
 
     const [total, logs] = await Promise.all([
-      tdb.emailLog.count({ where }),
-      tdb.emailLog.findMany({
+      tdb.auditLog.count({ where }),
+      tdb.auditLog.findMany({
         where,
+        include: { actor: { select: { id: true, name: true, email: true } } },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -35,6 +29,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ logs, total, pagination: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) } })
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to fetch email logs' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 })
   }
 }

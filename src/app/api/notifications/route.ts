@@ -9,32 +9,20 @@ export async function GET(req: Request) {
   try {
     const tdb = await getTenantDb()
     const url = new URL(req.url)
-    const status = url.searchParams.get('status')
-    const search = url.searchParams.get('q')
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10))
     const pageSize = Math.min(100, Math.max(10, parseInt(url.searchParams.get('pageSize') || '50', 10)))
 
-    const where: any = {}
-    if (status) where.status = status
-    if (search) {
-      where.OR = [
-        { toEmail: { contains: search } },
-        { subject: { contains: search } },
-      ]
-    }
-
-    const [total, logs] = await Promise.all([
-      tdb.emailLog.count({ where }),
-      tdb.emailLog.findMany({
-        where,
+    const [total, notifications] = await Promise.all([
+      tdb.notification.count(),
+      tdb.notification.findMany({
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
     ])
 
-    return NextResponse.json({ logs, total, pagination: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) } })
+    return NextResponse.json({ notifications, total, pagination: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) } })
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to fetch email logs' }, { status: 500 })
+    return NextResponse.json({ notifications: [], total: 0 })
   }
 }
