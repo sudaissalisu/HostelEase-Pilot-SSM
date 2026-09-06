@@ -140,7 +140,7 @@ interface FieldDef {
   options?: Array<{ label: string; value: string }>
 }
 
-const FIELDS: Record<SettingCategory, FieldDef[]> = {
+const FIELDS: Partial<Record<SettingCategory, FieldDef[]>> = {
   GENERAL: [
     { key: 'institution_name', label: 'Institution Name', type: 'text', placeholder: 'e.g. Ahmadu Bello University' },
     { key: 'institution_code', label: 'Institution Code', type: 'text', placeholder: 'e.g. ABU' },
