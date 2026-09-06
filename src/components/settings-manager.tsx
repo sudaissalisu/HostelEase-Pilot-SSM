@@ -812,10 +812,10 @@ export function SettingsManager() {
 
         {visibleTabs.map((m) => (
           <TabsContent key={m.key} value={m.key}>
-            {FIELDS[m.key].length > 0 && (
+            {(FIELDS[m.key]?.length ?? 0) > 0 {FIELDS[m.key].length > 0 &&{FIELDS[m.key].length > 0 && (
               <SettingsTabForm
                 category={m.key}
-                fields={FIELDS[m.key]}
+                fields={FIELDS[m.key] || []}
                 values={settings[m.key] || {}}
                 canEdit={canEdit}
                 onSaved={() => {/* SWR mutate is handled inside */}}
