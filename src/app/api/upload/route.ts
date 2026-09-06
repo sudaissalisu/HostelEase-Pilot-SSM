@@ -22,9 +22,10 @@ export async function POST(req: Request) {
   const dataUrl = `data:${file.type};base64,${bytes.toString('base64')}`
   const key = `ssm-upload-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`
 
-  await db.systemSetting.create({
-    data: { key, value: dataUrl, category: 'SSM_FILE_UPLOAD' },
-  })
+  await db.$queryRaw`
+    INSERT INTO "SystemSetting" (key, value, category, "updatedAt")
+    VALUES (${key}, ${dataUrl}, 'SSM_FILE_UPLOAD', NOW())
+  `
 
   return NextResponse.json({ url: `/api/file/${key}`, key, size: file.size, mimeType: file.type })
 }
