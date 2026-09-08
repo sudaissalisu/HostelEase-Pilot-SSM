@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
 export async function POST(req: Request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -22,10 +25,9 @@ export async function POST(req: Request) {
   const dataUrl = `data:${file.type};base64,${bytes.toString('base64')}`
   const key = `ssm-upload-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`
 
-  await db.$queryRaw`
-    INSERT INTO "SystemSetting" (key, value, category, "updatedAt")
-    VALUES (${key}, ${dataUrl}, 'SSM_FILE_UPLOAD', NOW())
-  `
+  await db.systemSetting.create({
+    data: { key, value: dataUrl, category: 'SSM_FILE_UPLOAD' },
+  })
 
   return NextResponse.json({ url: `/api/file/${key}`, key, size: file.size, mimeType: file.type })
 }

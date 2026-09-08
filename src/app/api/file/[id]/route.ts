@@ -4,8 +4,7 @@ import { db } from '@/lib/db'
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
   try {
-    const result = await db.$queryRaw`SELECT value FROM "SystemSetting" WHERE key = ${id}`
-    const setting = (result as any[])[0]
+    const setting = await db.systemSetting.findUnique({ where: { key: id } })
     if (!setting) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const dataUrl = setting.value
@@ -18,7 +17,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     return new NextResponse(buffer, {
       headers: { 'Content-Type': mimeType, 'Cache-Control': 'public, max-age=31536000, immutable' },
     })
-  } catch {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  } catch (err) {
+    return NextResponse.json({ error: 'Failed to load file' }, { status: 500 })
   }
 }
