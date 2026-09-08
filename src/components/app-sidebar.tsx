@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import useSWR from 'swr'
 import {
   ShieldCheck, LayoutDashboard, Building2, FileText, Receipt,
   TrendingUp, LifeBuoy, LogOut, Mail, BarChart3, Scale, CreditCard,
@@ -76,6 +77,15 @@ export function AppSidebar({ user, ...props }: { user: SessionUser | null } & Re
   const router = useRouter()
   const pathname = usePathname()
 
+  // Fetch branding so we can show the uploaded logo + school name
+  const { data: brandingData } = useSWR<{ branding: Record<string, string> }>('/api/branding', (url: string) =>
+    fetch(url, { credentials: 'include' }).then(r => r.ok ? r.json() : { branding: {} })
+  )
+  const branding = brandingData?.branding || {}
+  const logoUrl = branding.school_logo_url || ''
+  const schoolName = branding.institution_short_name || branding.school_name || 'SSM Pilot'
+  const tagline = branding.tagline || 'HostelEase Management'
+
   // Update isActive based on current path
   const navItems = MAIN_NAV.map(item => {
     if (item.items) {
@@ -109,12 +119,20 @@ export function AppSidebar({ user, ...props }: { user: SessionUser | null } & Re
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <div className="h-8 w-8 rounded-lg bg-primary grid place-items-center shrink-0">
-            <ShieldCheck className="h-4 w-4 text-primary-foreground" />
-          </div>
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={schoolName}
+              className="h-8 w-8 rounded-lg object-cover shrink-0"
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-lg bg-primary grid place-items-center shrink-0">
+              <ShieldCheck className="h-4 w-4 text-primary-foreground" />
+            </div>
+          )}
           <div className="flex flex-col">
-            <span className="text-sm font-semibold leading-tight">SSM Pilot</span>
-            <span className="text-[10px] text-muted-foreground">HostelEase Management</span>
+            <span className="text-sm font-semibold leading-tight">{schoolName}</span>
+            <span className="text-[10px] text-muted-foreground">{tagline}</span>
           </div>
         </div>
       </SidebarHeader>
