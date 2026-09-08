@@ -84,7 +84,8 @@ async function fetchImageBuffer(url: string, appUrl?: string): Promise<Buffer | 
   } catch { return null }
 }
 
-function fmtMoney(n: number): string {
+function fmtMoney(n: number, currency: string = 'NGN'): string {
+  if (currency === 'USD') return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   return `₦${n.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
@@ -258,9 +259,9 @@ export async function generateInvoicePdf(
           doc.fillColor(C.textDark).font('Helvetica').fontSize(9)
           doc.text(truncate(doc, item.description, colW.desc - 15), colX.desc + 10, ry + 7, { width: colW.desc - 15 })
           doc.text(String(item.quantity), colX.qty, ry + 7, { width: colW.qty, align: 'center' })
-          doc.text(fmtMoney(item.unitPrice), colX.price, ry + 7, { width: colW.price - 5, align: 'right' })
+          doc.text(fmtMoney(item.unitPrice, invoice.currency), colX.price, ry + 7, { width: colW.price - 5, align: 'right' })
           doc.font('Helvetica-Bold')
-          doc.text(fmtMoney(item.quantity * item.unitPrice), colX.amt, ry + 7, { width: colW.amt - 10, align: 'right' })
+          doc.text(fmtMoney(item.quantity * item.unitPrice, invoice.currency), colX.amt, ry + 7, { width: colW.amt - 10, align: 'right' })
         })
 
         y += lineItems.length * 24 + 10
@@ -286,9 +287,9 @@ export async function generateInvoicePdf(
         y += isLarge ? 20 : 16
       }
 
-      totalRow('Subtotal', fmtMoney(invoice.amount))
-      if (invoice.discountAmount > 0) totalRow('Discount', `- ${fmtMoney(invoice.discountAmount)}`)
-      if (invoice.taxAmount > 0) totalRow(`Tax (${invoice.taxRate}%)`, fmtMoney(invoice.taxAmount))
+      totalRow('Subtotal', fmtMoney(invoice.amount, invoice.currency))
+      if (invoice.discountAmount > 0) totalRow('Discount', `- ${fmtMoney(invoice.discountAmount, invoice.currency)}`)
+      if (invoice.taxAmount > 0) totalRow(`Tax (${invoice.taxRate}%)`, fmtMoney(invoice.taxAmount, invoice.currency))
       y += 4
       // Total line
       doc.save()
@@ -299,9 +300,18 @@ export async function generateInvoicePdf(
       doc.stroke()
       doc.restore()
       y += 6
-      totalRow('TOTAL', fmtMoney(invoice.total), true, true)
+      totalRow('TOTAL', fmtMoney(invoice.total, invoice.currency), true, true)
 
       y += 16
+
+      // ── Payment instructions (bank details / gateway link) ──
+      if (invoice.paymentInstructions) {
+        doc.fillColor(C.textMuted).font('Helvetica-Bold').fontSize(8)
+        doc.text('PAYMENT INSTRUCTIONS', margin, y)
+        doc.fillColor(C.textBody).font('Helvetica').fontSize(8.5)
+        doc.text(invoice.paymentInstructions, margin, y + 12, { width: contentW })
+        y = doc.y + 14
+      }
 
       // ── Payment info (if paid) ──
       if (invoice.status === 'paid' && invoice.method) {
@@ -310,7 +320,7 @@ export async function generateInvoicePdf(
         doc.strokeColor(C.emerald400).lineWidth(0.5).stroke()
         doc.restore()
         doc.fillColor(C.emerald900).font('Helvetica-Bold').fontSize(9)
-        doc.text('PAYMENT INFORMATION', margin + 12, y + 8)
+        doc.text('PAYMENT RECEIVED', margin + 12, y + 8)
         doc.fillColor(C.textBody).font('Helvetica').fontSize(9)
         doc.text(`Method: ${invoice.method}`, margin + 12, y + 22)
         if (invoice.reference) doc.text(`Reference: ${invoice.reference}`, margin + 200, y + 22)
@@ -326,6 +336,34 @@ export async function generateInvoicePdf(
         doc.text(invoice.notes, margin, y + 12, { width: contentW })
         y = doc.y + 16
       }
+
+      // ── Status stamp (PAID / UNPAID / OVERDUE) ──
+      // Draw a diagonal stamp in the top-right area of the invoice body
+      const stampLabels: Record<string, string> = {
+        paid: 'PAID', sent: 'UNPAID', pending: 'UNPAID', overdue: 'OVERDUE',
+        draft: 'DRAFT', cancelled: 'CANCELLED',
+      }
+      const stampColors: Record<string, string> = {
+        paid: C.emerald600, sent: C.amber500, pending: C.amber500,
+        overdue: C.red700, draft: C.textSubtle, cancelled: C.textSubtle,
+      }
+      const stampLabel = stampLabels[invoice.status] || invoice.status.toUpperCase()
+      const stampColor = stampColors[invoice.status] || C.textSubtle
+      // Draw stamp at top-right of the page (below header)
+      const stampY = 130
+      const stampX = pageWidth - margin - 120
+      doc.save()
+      doc.translate(stampX + 60, stampY + 15)
+      doc.rotate(-15)
+      doc.lineWidth(2)
+      doc.strokeColor(stampColor)
+      doc.roundedRect(-60, -15, 120, 30, 4)
+      doc.stroke()
+      doc.fillColor(stampColor)
+      doc.font('Helvetica-Bold')
+      doc.fontSize(16)
+      doc.text(stampLabel, -60, -8, { width: 120, align: 'center' })
+      doc.restore()
 
       // ── Signature ──
       const sigY = Math.max(y, pageHeight - 200)

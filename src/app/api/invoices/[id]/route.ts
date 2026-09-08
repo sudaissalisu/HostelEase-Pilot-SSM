@@ -37,10 +37,19 @@ export async function PATCH(
   if (!existing) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
 
   const body = await req.json()
-  const { description, lineItems, taxRate, discountAmount, period, dueAt, notes, status, paidAt, method, reference, signatureUrl } = body
+  const {
+    description, contactPerson, contactRole, clientAddress, clientEmail,
+    lineItems, taxRate, discountAmount, currency, period, dueAt, notes,
+    paymentInstructions, signatureUrl, status, paidAt, method, reference,
+  } = body
 
   const data: Record<string, unknown> = {}
   if (description !== undefined) data.description = description || null
+  if (contactPerson !== undefined) data.contactPerson = contactPerson || null
+  if (contactRole !== undefined) data.contactRole = contactRole || null
+  if (clientAddress !== undefined) data.clientAddress = clientAddress || null
+  if (clientEmail !== undefined) data.clientEmail = clientEmail || null
+  if (currency !== undefined) data.currency = currency || 'NGN'
   if (lineItems !== undefined) {
     const items = Array.isArray(lineItems) ? lineItems : []
     data.lineItems = JSON.stringify(items)
@@ -51,6 +60,7 @@ export async function PATCH(
   if (period !== undefined) data.period = period
   if (dueAt !== undefined) data.dueAt = dueAt ? new Date(dueAt) : null
   if (notes !== undefined) data.notes = notes || null
+  if (paymentInstructions !== undefined) data.paymentInstructions = paymentInstructions || null
   if (signatureUrl !== undefined) data.signatureUrl = signatureUrl || null
   if (status !== undefined) {
     data.status = status

@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
+import useSWR from 'swr'
 import {
   ShieldCheck, LayoutDashboard, LifeBuoy, LogOut, Menu, X, Loader2,
   ChevronRight, Sun, Moon, FileText, Settings, Palette, Scale,
+  Receipt, Building2, TrendingUp,
 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -23,7 +25,10 @@ const SECTIONS = [
   {
     title: 'Financials',
     items: [
-      { href: '/financials', label: 'Licenses & Invoices', icon: FileText },
+      { href: '/tenants', label: 'Tenants', icon: Building2 },
+      { href: '/invoices', label: 'Invoices', icon: Receipt },
+      { href: '/financials', label: 'Licenses', icon: FileText },
+      { href: '/revenue', label: 'Revenue', icon: TrendingUp },
     ]
   },
   {
@@ -53,6 +58,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+
+  // Fetch branding so the sidebar logo + school name update when saved
+  const { data: brandingData, mutate: mutateBranding } = useSWR<{ branding: Record<string, string> }>(
+    '/api/branding',
+    (url: string) => fetch(url, { credentials: 'include' }).then(r => r.ok ? r.json() : { branding: {} })
+  )
+  const branding = brandingData?.branding || {}
+  const logoUrl = branding.school_logo_url || ''
+  const schoolName = branding.institution_short_name || branding.school_name || 'SSM Pilot'
+  const tagline = branding.tagline || 'HostelEase Management'
 
   useEffect(() => {
     setMounted(true)
@@ -99,12 +114,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       )}>
         <div className="p-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center shrink-0 shadow-lg shadow-primary/20">
-              <ShieldCheck className="h-5 w-5 text-primary-foreground" />
-            </div>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={schoolName}
+                className="h-9 w-9 rounded-xl object-cover shrink-0 shadow-lg shadow-primary/20"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center shrink-0 shadow-lg shadow-primary/20">
+                <ShieldCheck className="h-5 w-5 text-primary-foreground" />
+              </div>
+            )}
             <div>
-              <div className="font-bold text-sm text-sidebar-foreground leading-tight">SSM Pilot</div>
-              <div className="text-[10px] text-muted-foreground">HostelEase Management</div>
+              <div className="font-bold text-sm text-sidebar-foreground leading-tight">{schoolName}</div>
+              <div className="text-[10px] text-muted-foreground">{tagline}</div>
             </div>
           </div>
         </div>
@@ -168,7 +191,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <main className="flex-1 min-w-0 flex flex-col min-h-screen">
         <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 lg:px-6 py-3 hidden lg:flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">SSM Pilot</span>
+            <span className="text-muted-foreground">{schoolName}</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
             <span className="font-medium text-foreground">{currentNav?.label || 'Dashboard'}</span>
           </div>

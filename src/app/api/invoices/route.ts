@@ -30,7 +30,11 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { tenantId, description, lineItems, taxRate, discountAmount, period, dueAt, notes, status } = body
+  const {
+    tenantId, description, contactPerson, contactRole, clientAddress, clientEmail,
+    lineItems, taxRate, discountAmount, currency, period, dueAt, notes,
+    paymentInstructions, signatureUrl, status,
+  } = body
 
   if (!tenantId || !period) {
     return NextResponse.json({ error: 'tenantId and period are required' }, { status: 400 })
@@ -54,16 +58,23 @@ export async function POST(req: Request) {
       tenantId,
       invoiceNo,
       description: description || null,
+      contactPerson: contactPerson || null,
+      contactRole: contactRole || null,
+      clientAddress: clientAddress || null,
+      clientEmail: clientEmail || null,
       lineItems: JSON.stringify(items),
       amount,
+      currency: currency || 'NGN',
       taxRate: tax,
       taxAmount,
       discountAmount: discount,
       total,
-      status: status || 'pending',
+      status: status || 'draft',
       period,
       dueAt: dueAt ? new Date(dueAt) : null,
       notes: notes || null,
+      paymentInstructions: paymentInstructions || null,
+      signatureUrl: signatureUrl || null,
       createdById: session.userId,
     },
     include: { tenant: { select: { name: true, shortName: true } } },
@@ -74,7 +85,7 @@ export async function POST(req: Request) {
     action: 'INVOICE_CREATED',
     entityType: 'INVOICE',
     entityId: invoice.id,
-    summary: `Invoice ${invoiceNo} created for ${invoice.tenant?.name || tenantId} — ${period} — ₦${total.toLocaleString()}`,
+    summary: `Invoice ${invoiceNo} created for ${invoice.tenant?.name || tenantId} — ${period} — ${currency || 'NGN'} ${total.toLocaleString()}`,
   })
 
   return NextResponse.json({ invoice })
