@@ -96,9 +96,18 @@ model Invoice {
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
   invoiceNo   String   @unique // "INV-2026-001"
+  // Free-text description shown at the top of the invoice
+  description String?
+  // JSON array of line items: [{ description, quantity, unitPrice }]
+  lineItems   String?  // JSON
   amount      Float
   currency    String   @default("NGN")
-  status      String   @default("pending") // pending | paid | overdue | cancelled
+  // Tax + discount
+  taxRate     Float    @default(0)
+  taxAmount   Float    @default(0)
+  discountAmount Float @default(0)
+  total       Float    @default(0)
+  status      String   @default("pending") // draft | pending | paid | overdue | cancelled
   period      String   // "2026 Annual License" | "2026 Q1 Setup"
   issuedAt    DateTime @default(now())
   dueAt       DateTime?
@@ -106,6 +115,8 @@ model Invoice {
   method      String?  // bank_transfer | paystack | flutterwave | cash
   reference   String?  // payment reference / transaction ID
   notes       String?
+  // Signature image URL (uploaded by admin, rendered on PDF)
+  signatureUrl String?
   createdById String?
   createdBy   SsmUser? @relation(fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
